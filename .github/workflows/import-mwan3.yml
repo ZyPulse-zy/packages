@@ -1,0 +1,24 @@
+name: Import reviewed mwan3 fix
+on:
+  push:
+    branches: [bootstrap/mwan3-import]
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+      - name: Verify exact reviewed commit
+        run: |
+          base64 --decode .bootstrap/mwan3.bundle.b64 > /tmp/mwan3.bundle
+          echo '4501dbbc7f3b693479a6527c218167a03bf73112db0268d21e55518a942b3a07  /tmp/mwan3.bundle' | sha256sum -c -
+          git fetch /tmp/mwan3.bundle HEAD:refs/remotes/import/mwan3
+          test "$(git rev-parse refs/remotes/import/mwan3)" = 641c46988f030a015bd0a2c33c1690d4032351c9
+          git checkout --detach refs/remotes/import/mwan3
+          git diff --check HEAD^
+          sh -n net/mwan3/test.sh
+      - name: Publish author-preserving fix branch
+        run: git push --force-with-lease=refs/heads/fix/mwan3-finite-status:681b4179a3ca463c879153cad403a25707b9983e origin HEAD:refs/heads/fix/mwan3-finite-status
