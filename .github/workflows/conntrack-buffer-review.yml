@@ -1,0 +1,108 @@
+name: Verify conntrack event buffer review revision
+on:
+  push:
+    branches: [bootstrap/conntrack-buffer-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import tested author-preserving commit
+        run: |
+          git fetch origin 3d6229131a40fc3417ad2d8bd9d4050458c4fd95
+          base64 -d ci/conntrack/source.bundle.b64 > "$RUNNER_TEMP/source.bundle"
+          echo 'ed4de370ae832ebe75185e8f5279c5c141ef466af1a75cd6f079d0d55ad2fc58  '"$RUNNER_TEMP/source.bundle" | sha256sum -c -
+          git bundle verify "$RUNNER_TEMP/source.bundle"
+          git fetch "$RUNNER_TEMP/source.bundle" HEAD
+          test "$(git rev-parse FETCH_HEAD)" = 0ce6d7834c866ced5474114fdc65d312872caabc
+          git push origin FETCH_HEAD:refs/heads/candidate/conntrack-buffer-review
+  native:
+    needs: import
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        source: ['1.4.8', mainline]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          sparse-checkout: ci/conntrack
+      - uses: actions/checkout@v4
+        with:
+          ref: candidate/conntrack-buffer-review
+          path: packages
+          sparse-checkout: net/conntrack-tools
+      - name: Install build and tracing dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y build-essential autoconf automake libtool pkg-config libmnl-dev libnfnetlink-dev libnetfilter-conntrack-dev libtirpc-dev bison flex strace python3 curl
+      - name: Check complete binary, exact original failure, all masks and upstream CLI suite
+        run: bash control/ci/conntrack/native-ci.sh "$PWD/packages" "$RUNNER_TEMP/conntrack-native" '${{ matrix.source }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-${{ matrix.source }}-evidence
+          path: |
+            ${{ runner.temp }}/conntrack-native/*.json
+            ${{ runner.temp }}/conntrack-native/*.log
+  sdk:
+    needs: import
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          sparse-checkout: ci/conntrack
+      - uses: actions/checkout@v4
+        with:
+          ref: candidate/conntrack-buffer-review
+          path: packages
+          sparse-checkout: |
+            net/conntrack-tools
+            libs/libtirpc
+            libs/libnetfilter-cttimeout
+            libs/libnetfilter-cthelper
+            libs/libnetfilter-queue
+      - uses: actions/checkout@v4
+        with:
+          repository: qosmio/openwrt-ipq
+          ref: 92a2d104145c8d265851c4b388a41bd8e9c21cd9
+          path: core
+          sparse-checkout: |
+            package/libs/libmnl
+            package/libs/libnfnetlink
+            package/libs/libnetfilter-conntrack
+      - name: Install native SDK prerequisites
+        run: sudo apt-get update -qq && sudo apt-get install -y build-essential gawk libncurses-dev zlib1g-dev file unzip zstd python3 curl
+      - name: Download official pinned SDK
+        run: |
+          curl --fail --location --retry 3 https://downloads.openwrt.org/releases/25.12.0/targets/qualcommax/ipq60xx/openwrt-sdk-25.12.0-qualcommax-ipq60xx_gcc-14.3.0_musl.Linux-x86_64.tar.zst -o sdk.tar.zst
+          echo '068b9f70a19fa95383be5778cdea5aeeef4ede61022de9e596f14bd4f30a4225  sdk.tar.zst' | sha256sum -c -
+          mkdir sdk
+          tar --zstd -xf sdk.tar.zst --strip-components=1 -C sdk
+          cp -a packages/net/conntrack-tools sdk/package/
+          cp -a packages/libs/* sdk/package/
+          cp -a core/package/libs/* sdk/package/
+          make -C sdk defconfig
+      - name: Verify actual quilt refresh and build dependency closure
+        run: |
+          cp sdk/package/conntrack-tools/patches/100-conntrack-event-socket-buffer.patch "$RUNNER_TEMP/before.patch"
+          make -C sdk package/conntrack-tools/prepare QUILT=1 V=s
+          make -C sdk package/conntrack-tools/refresh V=s
+          cmp "$RUNNER_TEMP/before.patch" sdk/package/conntrack-tools/patches/100-conntrack-event-socket-buffer.patch
+          python3 control/ci/conntrack/build-sdk.py --sdk sdk --report "$RUNNER_TEMP/sdk-result.json" --log "$RUNNER_TEMP/sdk-compile.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openwrt-aarch64-apk-evidence
+          path: |
+            ${{ runner.temp }}/sdk-result.json
+            ${{ runner.temp }}/sdk-compile.log
+            sdk/bin/packages/*/base/conntrack-*.apk
+            sdk/bin/packages/*/base/conntrackd-*.apk

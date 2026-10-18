@@ -41,7 +41,7 @@ for mode in original fixed; do
   make -C "$out/build-$mode/src" conntrack -j4
 done
 
-test_script="$packages/net/conntrack-tools/tests/test-event-buffer.py"
+test_script="$control/test-event-buffer.py"
 parent_netns=$(readlink /proc/self/ns/net)
 run_case() {
   sudo env LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" CONNTRACK_TEST_PARENT_NETNS="$parent_netns" \
