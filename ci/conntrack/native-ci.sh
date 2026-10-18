@@ -15,8 +15,29 @@ if [ "$variant" = mainline ]; then
   (cd "$out/library"; ./configure --prefix="$out/prefix" --disable-static; make -j4; make install)
   export PKG_CONFIG_PATH="$out/prefix/lib/pkgconfig"
   export LD_LIBRARY_PATH="$out/prefix/lib"
-  git clone --no-checkout https://repo.or.cz/conntrack-tools.git "$out/original"
-  git -C "$out/original" checkout --detach ab445258e803106c71c1cbee6580f31c67c3124e
+  # A content-pinned upstream snapshot avoids a flaky remote Git transport.
+  # Reconstruct and verify the complete original Git root and raw commit.
+  python3 - "$control" "$out" <<'PYCODE'
+from pathlib import Path
+import hashlib,json,sys,tarfile
+control,out=map(Path,sys.argv[1:]);meta=json.loads((control/'mainline-source.json').read_text())
+archive=control/'mainline-source.tar.xz'
+assert hashlib.sha256(archive.read_bytes()).hexdigest()==meta['archive_sha256']
+source=out/'original';source.mkdir()
+with tarfile.open(archive) as tar:
+    members=tar.getmembers()
+    assert all(m.name.startswith('conntrack-tools/') or m.name=='conntrack-tools' for m in members)
+    tar.extractall(out,filter='data')
+# git archive has a single explicit prefix, not executable archive metadata.
+(out/'conntrack-tools').rename(source/'snapshot')
+for child in (source/'snapshot').iterdir():child.rename(source/child.name)
+(source/'snapshot').rmdir()
+sys.path.insert(0,str(control))
+from restore_git import restore_git
+proof=restore_git(source,(control/'mainline.commit').read_bytes(),meta['commit'],branch='master')
+assert proof['tree']==meta['tree'] and proof['complete_tree_verified']
+(out/'mainline-source-verification.json').write_text(json.dumps(proof,indent=2)+'\n')
+PYCODE
 else
   curl --fail --location --retry 3 https://netfilter.org/pub/conntrack-tools/conntrack-tools-1.4.8.tar.xz -o "$out/release.tar.xz"
   echo '067677f4c5f6564819e78ed3a9d4a8980935ea9273f3abb22a420ea30ab5ded6  '"$out/release.tar.xz" | sha256sum -c -

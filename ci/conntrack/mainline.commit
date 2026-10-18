@@ -1,0 +1,13 @@
+tree 1b246f46533edbb6e0993f3c78bf6ac5256686f1
+parent 475cf4d7b257c40e9ad0e1786bcbddfbcb872828
+author Phil Sutter <phil@nwl.cc> 1779902843 +0200
+committer Phil Sutter <phil@nwl.cc> 1788445968 +0200
+
+conntrack.8: Document --stats counters
+
+Provide a brief description of each counter's meaning based on
+code-analysis in kernel's nf_conntrack_core.c and feedback from
+netfilter-devel list.
+
+Signed-off-by: Phil Sutter <phil@nwl.cc>
+Reviewed-by: Florian Westphal <fw@strlen.de>
