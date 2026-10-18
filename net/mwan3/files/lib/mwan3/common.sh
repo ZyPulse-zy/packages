@@ -187,6 +187,9 @@ mwan3_init()
 	route_modifiers="$route_modifiers s/ linkdown / /; s/ linkdown$/ /;"
 	route_modifiers="$route_modifiers s/expires [0-9]\+sec//;"
 	route_modifiers="$route_modifiers s/error [0-9]\+//;"
+	# iproute2 expands nexthop objects into via/dev fields. Replaying both
+	# nhid and its expansion is rejected; retain ID-only routes unmodified.
+	route_modifiers="$route_modifiers / nhid [0-9]\+/ { / via \| dev / s/ nhid [0-9]\+//; };"
 	MWAN3_ROUTE_LINE_EXP="$route_modifiers ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
 
 	# mark mask constants
