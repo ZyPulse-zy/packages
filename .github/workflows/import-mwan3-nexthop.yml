@@ -1,0 +1,44 @@
+name: Validate mwan3 expanded nexthop route replay
+on:
+  push:
+    branches: [bootstrap/mwan3-nexthop-dco]
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact signed-off source
+        run: |
+          base64 -d .bootstrap/mwan3-nexthop.bundle.b64 > /tmp/mwan.bundle
+          echo '6314a7b9bc92588139c238e0c9d2389ba6e309854466b30e2efa8a4797f602a1  /tmp/mwan.bundle' | sha256sum -c -
+          git fetch /tmp/mwan.bundle HEAD:refs/remotes/import/candidate
+          test "$(git rev-parse refs/remotes/import/candidate)" = 6c3efeb76f3ddfdce758f64d171d11a05a8235c8
+          git checkout --detach refs/remotes/import/candidate
+          git log -1 --format=%B | grep -Fx 'Signed-off-by: Yuen Su <zypulsecore@gmail.com>'
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iproute2 busybox
+          mkdir /tmp/mwan-test-bin
+          ln -s "$(command -v busybox)" /tmp/mwan-test-bin/ash
+          sudo modprobe dummy
+      - name: Reproduce original actual route installation failure
+        run: |
+          git worktree add --detach /tmp/mwan-original 3d6229131a40fc3417ad2d8bd9d4050458c4fd95
+          mkdir -p /tmp/mwan-original/net/mwan3/tests
+          cp net/mwan3/tests/test-nexthop-routes.py /tmp/mwan-original/net/mwan3/tests/
+          if sudo env MWAN_TEST_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 /tmp/mwan-original/net/mwan3/tests/test-nexthop-routes.py --shell /tmp/mwan-test-bin/ash > /tmp/mwan-before.log 2>&1; then
+            echo 'Expected original nexthop rejection'; exit 1
+          fi
+          cat /tmp/mwan-before.log
+          grep -q 'Nexthop specification and nexthop id are mutually exclusive' /tmp/mwan-before.log
+      - name: Actual fixed functions with bash and real kernel routes
+        run: sudo env MWAN_TEST_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 net/mwan3/tests/test-nexthop-routes.py --shell /bin/bash
+      - name: Actual fixed functions with BusyBox ash and real kernel routes
+        run: sudo env MWAN_TEST_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 net/mwan3/tests/test-nexthop-routes.py --shell /tmp/mwan-test-bin/ash
+      - name: Publish exact validated branch
+        run: git push --force-with-lease=refs/heads/fix/mwan3-expanded-nexthop:2cc532e90800acf67b534720e116e9c8cb8034b8 origin HEAD:refs/heads/fix/mwan3-expanded-nexthop
