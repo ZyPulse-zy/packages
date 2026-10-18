@@ -45,7 +45,7 @@ test_script="$packages/net/conntrack-tools/tests/test-event-buffer.py"
 parent_netns=$(readlink /proc/self/ns/net)
 run_case() {
   sudo env LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" CONNTRACK_TEST_PARENT_NETNS="$parent_netns" \
-    unshare --user --map-root-user --net python3 "$test_script" "$1" --report "$2"
+    unshare --net python3 "$test_script" "$1" --report "$2"
 }
 if run_case "$out/build-original/src/conntrack" "$out/original-failure.json"; then
   echo 'Original unexpectedly passed' >&2
@@ -61,7 +61,7 @@ run_case "$out/build-fixed/src/conntrack" "$out/fixed-result.json"
 # Preserve the upstream CLI test runner's expected relative binary path.
 ln -s "$out/build-fixed/src/conntrack" "$out/fixed/src/conntrack"
 make -C "$out/fixed/tests/conntrack" test
-sudo env LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" unshare --user --map-root-user --net \
+sudo env LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" unshare --net \
   sh -c 'cd "$1"; exec ./test' sh "$out/fixed/tests/conntrack" | tee "$out/upstream-cli.log"
 
 mkdir "$out/build-sanitize"
@@ -69,5 +69,5 @@ mkdir "$out/build-sanitize"
 make -C "$out/build-sanitize/extensions" -j4
 make -C "$out/build-sanitize/src" conntrack -j4
 # LSan cannot operate under ptrace; ASan and UBSan remain enabled.
-sudo env ASAN_OPTIONS=detect_leaks=0 LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" CONNTRACK_TEST_PARENT_NETNS="$parent_netns" \
-  unshare --user --map-root-user --net python3 "$test_script" "$out/build-sanitize/src/conntrack" --report "$out/asan-ubsan-lsan-disabled.json"
+sudo env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}" CONNTRACK_TEST_PARENT_NETNS="$parent_netns" \
+  unshare --net python3 "$test_script" "$out/build-sanitize/src/conntrack" --report "$out/asan-ubsan-lsan-disabled.json"
