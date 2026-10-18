@@ -33,3 +33,20 @@ if sudo env MWAN3_TEST_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare --ne
 fi
 grep -F 'PD excludes other WAN outside /56:' "$evidence_dir/digit-only-cidr-failure.log"
 grep -F "got '2001:db8:abcd:100::1'" "$evidence_dir/digit-only-cidr-failure.log"
+
+# Exercise the exact newly added section of the package test.sh; the upstream
+# package runner also executes the existing initialization/route checks.
+python3 - "$source_dir/net/mwan3/test.sh" "$evidence_dir/lightweight.sh" <<'PYTEST'
+from pathlib import Path
+import sys
+marker='# Delegated-source regression:'
+text=Path(sys.argv[1]).read_text();assert text.count(marker)==1
+Path(sys.argv[2]).write_text(marker+text.split(marker,1)[1])
+PYTEST
+for variant in bash busybox; do
+  if [ "$variant" = bash ]; then shell=(bash); else shell=(busybox ash); fi
+  "${shell[@]}" -c 'set +e; . "$1"; set -e; . "$2"' sh "$common" "$evidence_dir/lightweight.sh" > "$evidence_dir/lightweight-$variant.log" 2>&1
+  if "${shell[@]}" -c 'set +e; . "$1"; set -e; . "$2"' sh "$evidence_dir/original-common.sh" "$evidence_dir/lightweight.sh" > "$evidence_dir/lightweight-original-$variant.log" 2>&1; then echo 'Original passed lightweight regression'; exit 1; fi
+  grep -F 'failed delegated source' "$evidence_dir/lightweight-original-$variant.log"
+done
+printf '%s\n' 'Six package test.sh cases passed per shell; original rejected' > "$evidence_dir/lightweight-summary.txt"
