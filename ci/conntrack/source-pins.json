@@ -1,0 +1,10 @@
+{
+  "1.4.8": {
+    "original": "0c96a3a24e8a1ec3179a7edb5a678a655c3be6eb6c9fdf78b2c275a11424948e",
+    "fixed": "9671f2590a8522c7e786e80ca1ac92141c786fbf89323482ce5db276011ad2b5"
+  },
+  "mainline": {
+    "original": "f010b00ea60748238c444e1a1ff16ce2efdacde40100c1a6a09c44b774c8e0e7",
+    "fixed": "5d1825c07d137c8f745321714deeec8188b3b93060425c0880cb585fd800114f"
+  }
+}
