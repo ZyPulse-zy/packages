@@ -1,0 +1,64 @@
+name: Verify mwan3 IPv6-PD source selection
+on:
+  push:
+    branches: [bootstrap/mwan3-pd-source]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import exact signed-off candidate
+        run: |
+          git fetch origin 3d6229131a40fc3417ad2d8bd9d4050458c4fd95
+          base64 -d ci/mwan3-pd/source.bundle.b64 > "$RUNNER_TEMP/source.bundle"
+          echo '429a0f318d79bb110dbc257712098ebb6de751495dce4dd9adb0a1dcc76bc666  '"$RUNNER_TEMP/source.bundle" | sha256sum -c -
+          git bundle verify "$RUNNER_TEMP/source.bundle"
+          git fetch "$RUNNER_TEMP/source.bundle" HEAD
+          test "$(git rev-parse FETCH_HEAD)" = 468595cd094d718323fa2f2bb050c80ab940239e
+          git push origin FETCH_HEAD:refs/heads/fix/mwan3-ipv6-pd-source
+  native:
+    needs: import
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          sparse-checkout: ci/mwan3-pd
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/mwan3-ipv6-pd-source
+          path: packages
+          sparse-checkout: net/mwan3
+      - run: sudo apt-get update -qq && sudo apt-get install -y iproute2 busybox
+      - run: bash control/ci/mwan3-pd/native.sh "$PWD/packages" "$RUNNER_TEMP/mwan3-pd-native"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mwan3-pd-native-evidence
+          path: ${{ runner.temp }}/mwan3-pd-native
+  sdk:
+    needs: import
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          sparse-checkout: ci/mwan3-pd
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/mwan3-ipv6-pd-source
+          path: packages
+          sparse-checkout: net/mwan3
+      - run: sudo apt-get update -qq && sudo apt-get install -y build-essential gawk libncurses-dev zlib1g-dev file unzip zstd python3 curl busybox iproute2
+      - run: bash control/ci/mwan3-pd/sdk.sh "$PWD/packages" "$RUNNER_TEMP/mwan3-pd-sdk"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mwan3-pd-sdk-apk-evidence
+          path: ${{ runner.temp }}/mwan3-pd-sdk
