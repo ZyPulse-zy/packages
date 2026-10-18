@@ -24,6 +24,7 @@ def main():
     parser.add_argument("--common", type=Path, required=True)
     parser.add_argument("--shell", default="busybox ash")
     parser.add_argument("--sed", type=Path, default=Path(shutil.which("sed")))
+    parser.add_argument("--ip", type=Path, default=Path(shutil.which("ip")))
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     parent = os.environ.get("MWAN3_TEST_PARENT_NETNS")
@@ -32,9 +33,11 @@ def main():
         raise SystemExit("Refusing test outside a root, isolated network namespace")
     common = args.common.resolve(strict=True)
     sed = args.sed.resolve(strict=True)
+    ip_command = args.ip.resolve(strict=True)
     tools = tempfile.TemporaryDirectory(prefix="mwan3-pd-tools-")
     # BusyBox selects its actual sed applet by the symlink basename.
     (Path(tools.name) / "sed").symlink_to(sed)
+    (Path(tools.name) / "ip").symlink_to(ip_command)
     count = 0
     results = []
 
@@ -47,14 +50,19 @@ def main():
     def ip(*words):
         return subprocess.check_output(["ip", *words], text=True)
 
-    for device in ("pd-wan", "pd-lan"):
+    for device in ("pd-wan", "other-wan", "pd-lan"):
         ip("link", "add", device, "type", "dummy")
         ip("link", "set", device, "up")
     ip("-4", "addr", "add", "192.0.2.2/24", "dev", "pd-wan")
-    ip("-6", "addr", "add", "2001:db8:ffff::1/64", "dev", "pd-wan", "nodad")
+    ip("-6", "addr", "add", "2001:db8:eeee::1/64", "dev", "other-wan", "nodad")
 
     shell = r"""
 . "$1"
+# Explicit paths prevent BusyBox standalone applets from bypassing the chosen
+# external tools (especially a target ip-tiny binary running under QEMU).
+IP4="$TEST_IP_COMMAND -4"
+IP6="$TEST_IP_COMMAND -6"
+sed() { command "$TEST_SED_COMMAND" "$@"; }
 mwan3_get_true_iface() { export "$1=$2"; }
 config_get() { export "$1=$TEST_FAMILY"; }
 network_get_ipaddr() { export "$1=$TEST_ADDRESS"; }
@@ -67,16 +75,27 @@ printf '%s\n' "$selected"
 """
 
     def run_case(
-        name, expected, *, delegated=None, family="ipv6", direct="", prefix="2001:db8:abcd::/48"
+        name,
+        expected,
+        *,
+        delegated=None,
+        family="ipv6",
+        direct="",
+        prefix="2001:db8:abcd::/48",
+        competing=None,
     ):
         ip("-6", "addr", "flush", "dev", "pd-lan", "scope", "global")
         if delegated:
             ip("-6", "addr", "add", delegated + "/64", "dev", "pd-lan", "nodad")
+        if competing:
+            ip("-6", "addr", "add", competing + "/64", "dev", "other-wan", "nodad")
         env = dict(
             os.environ,
             TEST_FAMILY=family,
             TEST_ADDRESS=direct,
             TEST_PREFIX=prefix,
+            TEST_IP_COMMAND=str(Path(tools.name) / "ip"),
+            TEST_SED_COMMAND=str(Path(tools.name) / "sed"),
             PATH=tools.name + os.pathsep + os.environ["PATH"],
         )
         selected = subprocess.check_output(
@@ -102,6 +121,8 @@ printf '%s\n' "$selected"
         check(bind_error is None, f"{name}: cannot bind selected source: {bind_error}")
         check(bound == selected, f"{name}: kernel bind selected another address")
         results.append({"case": name, "selected": selected, "kernel_bind": True})
+        if competing:
+            ip("-6", "addr", "del", competing + "/64", "dev", "other-wan")
 
     run_case("PD digits 0-6", "2001:db8:abcd:1234::6", delegated="2001:db8:abcd:1234::6")
     for digit in "789":
@@ -118,13 +139,52 @@ printf '%s\n' "$selected"
         delegated="2001:db8:abcd:7::1",
         direct="2001:db8:abcd:7::1",
     )
+    ip("-6", "addr", "add", "2001:db8:ffff::1/64", "dev", "pd-wan", "nodad")
     run_case("no prefix: WAN fallback", "2001:db8:ffff::1", prefix="")
+    ip("-6", "addr", "del", "2001:db8:ffff::1/64", "dev", "pd-wan")
     run_case("netifd direct IPv4", "192.0.2.2", family="ipv4", direct="192.0.2.2")
     run_case("IPv4 WAN fallback", "192.0.2.2", family="ipv4")
+    run_case(
+        "PD excludes other WAN outside /56",
+        "2001:db8:abcd:ab::1",
+        delegated="2001:db8:abcd:ab::1",
+        prefix="2001:db8:abcd::/56",
+        competing="2001:db8:abcd:100::1",
+    )
+    for subnet in ("1200", "127f", "12ff"):
+        address = "2001:db8:abcd:" + subnet + "::1"
+        run_case(
+            "PD /56 subnet " + subnet, address, delegated=address, prefix="2001:db8:abcd:1200::/56"
+        )
+    run_case(
+        "PD /60 non-hextet boundary",
+        "2001:db8:abcd:123a::1",
+        delegated="2001:db8:abcd:123a::1",
+        prefix="2001:db8:abcd:1230::/60",
+    )
+    run_case(
+        "PD /62 non-nibble boundary",
+        "2001:db8:abcd:1237::1",
+        delegated="2001:db8:abcd:1237::1",
+        prefix="2001:db8:abcd:1234::/62",
+    )
+    run_case(
+        "PD uppercase prefix",
+        "2001:db8:abcd:1::1",
+        delegated="2001:db8:abcd:1::1",
+        prefix="2001:DB8:ABCD::/48",
+    )
+    run_case(
+        "PD uncompressed prefix",
+        "2001:db8:abcd::1234",
+        delegated="2001:db8:abcd::1234",
+        prefix="2001:0db8:abcd:0000::/64",
+    )
     report = {
         "passed": True,
         "shell": args.shell,
         "sed": str(sed),
+        "ip_command": str(ip_command),
         "cases": results,
         "assertions": count,
         "kernel": os.uname().release,
