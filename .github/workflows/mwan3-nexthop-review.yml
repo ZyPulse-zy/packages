@@ -26,6 +26,7 @@ jobs:
   native:
     needs: import
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,9 +71,11 @@ jobs:
             tag=$(basename "$shell")
             sudo env MWAN_TEST_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 packages/net/mwan3/tests/test-nexthop-routes.py --shell "$shell" > "$RUNNER_TEMP/mwan-evidence/fixed-$tag-kernel.log" 2>&1
           done
-          git -C packages diff-tree --check --root -r HEAD
+          git -C packages fetch --depth=1 --filter=blob:none origin 3d6229131a40fc3417ad2d8bd9d4050458c4fd95
+          git -C packages diff --check 3d6229131a40fc3417ad2d8bd9d4050458c4fd95 HEAD
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mwan3-nexthop-review-evidence
           path: ${{ runner.temp }}/mwan-evidence
+
