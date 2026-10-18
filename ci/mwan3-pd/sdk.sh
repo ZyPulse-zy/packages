@@ -28,6 +28,7 @@ arm_root="$evidence_dir/arm-root"
 mkdir -p "$arm_root/lib"
 cp -L sdk/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.3.0_musl/lib/libc.so "$arm_root/lib/libc.so"
 ln -s libc.so "$arm_root/lib/ld-musl-aarch64.so.1"
+cp -L sdk/staging_dir/toolchain-aarch64_cortex-a53_gcc-14.3.0_musl/lib/libgcc_s.so.1 "$arm_root/lib/libgcc_s.so.1"
 curl --fail --location --retry 3 --connect-timeout 15 --max-time 120 https://downloads.openwrt.org/releases/25.12.0/packages/aarch64_cortex-a53/base/ip-tiny-6.18.0-r2.apk -o "$evidence_dir/ip-tiny.apk"
 curl --fail --location --retry 3 --connect-timeout 15 --max-time 120 https://downloads.openwrt.org/releases/25.12.0/packages/aarch64_cortex-a53/base/libmnl0-1.0.5-r1.apk -o "$evidence_dir/libmnl.apk"
 echo '57bb04438e112c1bca0b46f6837b4955d1c73ee1a429915a8d70aa750c688f65  '"$evidence_dir/ip-tiny.apk" | sha256sum -c -
