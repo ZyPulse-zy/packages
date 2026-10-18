@@ -1,0 +1,78 @@
+name: Validate mwan3 nexthop review and normal test entry
+on:
+  push:
+    branches: [bootstrap/mwan3-nexthop-review]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .bootstrap
+      - name: Import exact author-preserving reviewed source
+        run: |
+          git fetch --filter=blob:none origin 3d6229131a40fc3417ad2d8bd9d4050458c4fd95
+          base64 -d .bootstrap/mwan3-review.bundle.b64 > "$RUNNER_TEMP/candidate.bundle"
+          echo '9c4e27f1f7851c2ac8458144b0f69fff36827696774ce766ce48268de865cbaf  '"$RUNNER_TEMP/candidate.bundle" | sha256sum -c -
+          git bundle verify "$RUNNER_TEMP/candidate.bundle"
+          git fetch "$RUNNER_TEMP/candidate.bundle" HEAD
+          test "$(git rev-parse FETCH_HEAD)" = c831a1c471daee2203df8110ca12a19d0d5593f2
+          git push origin FETCH_HEAD:refs/heads/candidate/mwan3-nexthop-review
+  native:
+    needs: import
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          sparse-checkout: .bootstrap
+      - uses: actions/checkout@v4
+        with:
+          ref: candidate/mwan3-nexthop-review
+          path: packages
+          sparse-checkout: net/mwan3
+      - uses: actions/checkout@v4
+        with:
+          ref: 3d6229131a40fc3417ad2d8bd9d4050458c4fd95
+          path: original
+          sparse-checkout: net/mwan3
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y iproute2 busybox python3
+          mkdir "$RUNNER_TEMP/mwan-bin"
+          ln -s "$(command -v busybox)" "$RUNNER_TEMP/mwan-bin/ash"
+          sudo modprobe dummy
+      - name: Existing test.sh entry, original failure and fixed checks on both shells
+        run: |
+          mkdir "$RUNNER_TEMP/mwan-evidence"
+          for shell in /bin/bash "$RUNNER_TEMP/mwan-bin/ash"; do
+            tag=$(basename "$shell")
+            python3 control/.bootstrap/test-mwan3-entry.py --common original/net/mwan3/files/lib/mwan3/common.sh --test-script packages/net/mwan3/test.sh --shell "$shell" --expect-original-failure > "$RUNNER_TEMP/mwan-evidence/original-$tag-entry.log" 2>&1
+            python3 control/.bootstrap/test-mwan3-entry.py --common packages/net/mwan3/files/lib/mwan3/common.sh --test-script packages/net/mwan3/test.sh --shell "$shell" > "$RUNNER_TEMP/mwan-evidence/fixed-$tag-entry.log" 2>&1
+          done
+      - name: Original actual kernel FIB rejection
+        run: |
+          mkdir -p original/net/mwan3/tests
+          cp packages/net/mwan3/tests/test-nexthop-routes.py original/net/mwan3/tests/
+          if sudo env MWAN_TEST_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 original/net/mwan3/tests/test-nexthop-routes.py --shell "$RUNNER_TEMP/mwan-bin/ash" > "$RUNNER_TEMP/mwan-evidence/original-kernel.log" 2>&1; then
+            echo 'Original unexpectedly passed'; exit 1
+          fi
+          grep -F 'Nexthop specification and nexthop id are mutually exclusive' "$RUNNER_TEMP/mwan-evidence/original-kernel.log"
+      - name: Fixed actual kernel FIB matrices, both shells
+        run: |
+          for shell in /bin/bash "$RUNNER_TEMP/mwan-bin/ash"; do
+            tag=$(basename "$shell")
+            sudo env MWAN_TEST_PARENT_NETNS="$(readlink /proc/self/ns/net)" unshare -n python3 packages/net/mwan3/tests/test-nexthop-routes.py --shell "$shell" > "$RUNNER_TEMP/mwan-evidence/fixed-$tag-kernel.log" 2>&1
+          done
+          git -C packages diff-tree --check --root -r HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mwan3-nexthop-review-evidence
+          path: ${{ runner.temp }}/mwan-evidence
