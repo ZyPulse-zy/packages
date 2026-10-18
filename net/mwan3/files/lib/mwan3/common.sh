@@ -93,7 +93,7 @@ mwan3_get_src_ip()
 				# NOTE: is there a better/more reliable way to get a
 				#       usable address to use as source for pings here?
 				local pfx_sed
-				pfx_sed='s/ *inet6 \('"$_src_ip"':[0-6a-f:]\+\).* scope.*/\1/'
+				pfx_sed='s/ *inet6 \('"$_src_ip"':[0-9a-f:]\+\).* scope.*/\1/'
 				_src_ip=$($IP address ls | sed -ne "${pfx_sed};T;p;q")
 			fi
 		fi
