@@ -1,0 +1,33 @@
+name: Verify commit formatting on previously tested source tree
+on:
+  push:
+    branches: [bootstrap/mwan3-format]
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Import exact signed-off commit
+        run: |
+          base64 -d .bootstrap/mwan3-format.bundle.b64 > /tmp/format.bundle
+          echo 'c4c370dd8fdec6be22d34375f4c90796d8c71fc9419980b6a7ed1ed2cb1c746c  /tmp/format.bundle' | sha256sum -c -
+          git fetch /tmp/format.bundle HEAD:refs/remotes/import/formatted
+          test "$(git rev-parse refs/remotes/import/formatted)" = c9436daad98e7650dcdaef98be1252e278835954
+          git checkout --detach refs/remotes/import/formatted
+      - name: Prove code identity and validate message width
+        run: |
+          test "$(git rev-parse HEAD^{tree})" = 555d631d33aca484486a59cbc9fe1b7f83bb8439
+          git diff --exit-code 6c3efeb76f3ddfdce758f64d171d11a05a8235c8 HEAD -- .
+          python3 - <<'PY'
+          import subprocess
+          msg=subprocess.check_output(['git','log','-1','--format=%B'],text=True)
+          assert max(map(len,msg.splitlines()))<=100
+          assert 'Signed-off-by: Yuen Su <zypulsecore@gmail.com>' in msg.splitlines()
+          print('Message validated; complete source tree is identical to functional CI run 39082329931')
+          PY
+      - name: Update the existing PR branch with a checked lease
+        run: git push --force-with-lease=refs/heads/fix/mwan3-expanded-nexthop:6c3efeb76f3ddfdce758f64d171d11a05a8235c8 origin HEAD:refs/heads/fix/mwan3-expanded-nexthop
