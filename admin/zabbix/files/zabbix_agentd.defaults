@@ -1,3 +1,0 @@
-#!/bin/sh
-
-chown zabbix-agent:zabbix-agent /etc/zabbix_agentd.conf

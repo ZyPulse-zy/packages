@@ -1,5 +1,0 @@
-define(`confCC', `TARGET_CC')
-define(`confCCOPTS', `TARGET_CFLAGS')
-APPENDDEF(`confENVDEF',`-DSTARTTLS')
-APPENDDEF(`confENVDEF',`-DHASFLOCK')
-APPENDDEF(`confLIBS', `-lssl -lcrypto')

@@ -1,7 +1,0 @@
-{
-	"name": "alviy.com",
-	"ipv4": {
-		"url": "https://[USERNAME]:[PASSWORD]@dynupdate.alviy.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
-		"answer": "good|nochg"
-	}
-}

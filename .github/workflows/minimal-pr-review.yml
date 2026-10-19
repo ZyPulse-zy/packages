@@ -1,0 +1,50 @@
+name: Verify minimal PR revisions
+on:
+  push:
+    branches: [bootstrap/pr-maintenance-minimal-20261019]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 681b4179a3ca463c879153cad403a25707b9983e
+          fetch-depth: 1
+          path: source
+      - name: Build pinned ucode for package tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake pkg-config libjson-c-dev busybox
+          git init ucode-source
+          git -C ucode-source fetch --depth=1 https://github.com/jow-/ucode.git cc323341c31828b2126d90c6b8a95bb4e7de88b0
+          git -C ucode-source checkout --detach FETCH_HEAD
+          cmake -S ucode-source -B ucode-build -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/ucode-runtime" -DFS_SUPPORT=ON -DUCI_SUPPORT=OFF -DUBUS_SUPPORT=OFF -DULOOP_SUPPORT=OFF -DNLS_SUPPORT=OFF -DRTNL_SUPPORT=OFF
+          cmake --build ucode-build -j2
+          cmake --install ucode-build
+          mkdir -p bin
+          printf '#!/bin/sh\nexec "%s" -L "%s/*.so" "$@"\n' "$GITHUB_WORKSPACE/ucode-build/ucode" "$GITHUB_WORKSPACE/ucode-build" > bin/ucode
+          chmod +x bin/ucode
+          echo "$GITHUB_WORKSPACE/bin" >> "$GITHUB_PATH"
+      - name: Verify candidate trees and retained tests
+        run: |
+          mkdir -p bin
+          ln -s "$(command -v busybox)" bin/ash
+          python3 ci/verify-revisions.py --manifest ci/manifest.json --source source --output evidence --ash "$GITHUB_WORKSPACE/bin/ash"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: minimal-pr-revisions-packages
+          path: evidence/
+          if-no-files-found: error
+      - name: Publish only validated candidate branches
+        run: |
+          python3 - <<'PYCODE'
+          import json,subprocess
+          from pathlib import Path
+          source=Path('source').resolve()
+          for c in json.loads(Path('ci/manifest.json').read_text()):
+              subprocess.run(['git','-C',str(source),'push','origin',c['candidate']+':refs/heads/validated/minimal-'+c['slug']+'-20261019'],check=True)
+          PYCODE
