@@ -14,7 +14,8 @@ p.add_argument('--expected-failure', default='')
 a = p.parse_args()
 root = a.source.resolve()
 body = (root / 'net/mwan3/test.sh').read_text().split('set -e\n', 1)[1]
-if a.plugin:
+external = root / 'net/mwan3/test-rpcd.uc'
+if a.plugin and not external.exists():
     assert body.count("'/usr/share/rpcd/ucode/mwan3'") == 1
     # This substitutes only the installation path in the independent fixture.
     body = body.replace("'/usr/share/rpcd/ucode/mwan3'", repr(str(a.plugin.resolve())))
@@ -30,9 +31,18 @@ LOG() { :; }
 set -e
 '''
 with tempfile.TemporaryDirectory(prefix='mwan-entry-') as directory:
-    result = subprocess.run([a.shell, '-c', setup + body, 'entry',
+    fixture = Path(directory)
+    if external.exists():
+        program = external.read_text()
+        if a.plugin:
+            assert program.count("'/usr/share/rpcd/ucode/mwan3'") == 1
+            program = program.replace("'/usr/share/rpcd/ucode/mwan3'", repr(str(a.plugin.resolve())))
+        (fixture / external.name).write_text(program)
+    entry = fixture / 'test.sh'
+    entry.write_text(setup + body)
+    result = subprocess.run([a.shell, str(entry),
         str((a.common or root / 'net/mwan3/files/lib/mwan3/common.sh').resolve()), directory],
-        capture_output=True, text=True, timeout=30)
+        cwd='/', capture_output=True, text=True, timeout=30)
     print(result.stdout + result.stderr, end='')
     if a.expected_failure:
         assert result.returncode != 0 and a.expected_failure in result.stderr

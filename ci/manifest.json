@@ -2,77 +2,56 @@
   {
     "repo": "openwrt/packages",
     "n": 30800,
-    "source": "openwrt-packages",
     "slug": "mwan3-rpcd",
-    "message": "mwan3: return zero for empty integer state\n\nAn empty mwan3track state file becomes NaN in the rpcd response. Default\nfailed integer conversions to zero, as the shell handler did.\n\nAdd a focused regression for the installed integer helpers to test.sh\nand bump the package release.\n\nFixes: #29653\nSigned-off-by: Yuen Su <zypulsecore@gmail.com>\n",
-    "old": "641c46988f030a015bd0a2c33c1690d4032351c9",
     "base": "681b4179a3ca463c879153cad403a25707b9983e",
     "branch": "fix/mwan3-finite-status",
     "fork": "ZyPulse-zy/packages",
-    "files": [
-      "net/mwan3/Makefile",
-      "net/mwan3/files/usr/share/rpcd/ucode/mwan3",
-      "net/mwan3/test.sh"
-    ],
-    "upstream_base_now": "681b4179a3ca463c879153cad403a25707b9983e",
-    "candidate": "e68a72463fe636709fc4d580aa7cceb4ebbf61fe",
+    "old": "e68a72463fe636709fc4d580aa7cceb4ebbf61fe",
+    "candidate": "ac6f7aa311b0ecdb0d62c9e70f019f5b19598ef4",
     "upstream_files": [
       "net/mwan3/Makefile",
       "net/mwan3/files/usr/share/rpcd/ucode/mwan3",
+      "net/mwan3/test-rpcd.uc",
       "net/mwan3/test.sh"
     ],
-    "bundle_sha256": "49a9725ede9c99d9101ed2af208d915e6a867b74471e79d15a0eebf4e6abe3de"
+    "validated_branch": "validated/maintainer-mwan3-rpcd-20261021",
+    "archive_branch": "archive/before-maintainer-mwan3-rpcd-20261021",
+    "bundle_sha256": "1d8faed03662e0343fd6177894e1da536699ce80d8855809c5501097194c5d23"
   },
   {
     "repo": "openwrt/packages",
     "n": 30803,
-    "source": "mwan3-nexthop-review",
     "slug": "mwan3-nexthop",
-    "message": "mwan3: normalize expanded nexthop routes before copying\n\nThe kernel's nexthop compatibility dump contains both nhid and its\nexpanded via/dev fields. Replaying both makes iproute2 reject the route.\nRemove the redundant ID from expanded routes, keeping ID-only routes\nand other attributes intact.\n\nCover the parser cases in the existing package test.sh and bump the\npackage release.\n\nFixes: #27066\nSigned-off-by: Yuen Su <zypulsecore@gmail.com>\n",
-    "old": "c831a1c471daee2203df8110ca12a19d0d5593f2",
     "base": "3d6229131a40fc3417ad2d8bd9d4050458c4fd95",
     "branch": "fix/mwan3-expanded-nexthop",
     "fork": "ZyPulse-zy/packages",
-    "files": [
-      "net/mwan3/Makefile",
-      "net/mwan3/files/lib/mwan3/common.sh",
-      "net/mwan3/test.sh",
-      "net/mwan3/tests/README.md",
-      "net/mwan3/tests/test-nexthop-routes.py"
-    ],
-    "upstream_base_now": "3d6229131a40fc3417ad2d8bd9d4050458c4fd95",
-    "candidate": "6d0ff59f8cb82fbea93b86c3c0101e22cc516e10",
+    "old": "6d0ff59f8cb82fbea93b86c3c0101e22cc516e10",
+    "candidate": "9d12761ec6eda93caafa2004e4ccd0eafd734e61",
     "upstream_files": [
       "net/mwan3/Makefile",
       "net/mwan3/files/lib/mwan3/common.sh",
       "net/mwan3/test.sh"
     ],
-    "bundle_sha256": "0e33adb703fd3607aab842bb4ede9900a9083a5d2a58e9f2bf8957b53967385f"
+    "validated_branch": "validated/maintainer-mwan3-nexthop-20261021",
+    "archive_branch": "archive/before-maintainer-mwan3-nexthop-20261021",
+    "bundle_sha256": "001e746b153e326eb826721ef885c0a178faeef0d3761d31f2308b9a3a6e8901"
   },
   {
     "repo": "openwrt/packages",
     "n": 30806,
-    "source": "mwan3-prefix",
     "slug": "mwan3-pd",
-    "message": "mwan3: select delegated IPv6 sources by their full prefix\n\nThe textual prefix fallback can truncate addresses containing 7-9 and\nselect an address outside the delegated network. Use ip's existing CIDR\nfilter to select an assigned global address within the delegated prefix.\nPreserve direct netifd addresses and existing non-PD fallbacks.\n\nAdd regression cases to test.sh and bump the package release.\n\nFixes: 75a96faba764 (\"mwan3: common.sh: fix src_ip detection for ipv6-PD\")\nSigned-off-by: Yuen Su <zypulsecore@gmail.com>\n",
-    "old": "650322f427f817472344861a4c2df89697a95bae",
     "base": "3d6229131a40fc3417ad2d8bd9d4050458c4fd95",
     "branch": "fix/mwan3-ipv6-pd-source",
     "fork": "ZyPulse-zy/packages",
-    "files": [
-      "net/mwan3/Makefile",
-      "net/mwan3/files/lib/mwan3/common.sh",
-      "net/mwan3/test.sh",
-      "net/mwan3/tests/README.md",
-      "net/mwan3/tests/test-ipv6-pd-source.py"
-    ],
-    "upstream_base_now": "3d6229131a40fc3417ad2d8bd9d4050458c4fd95",
-    "candidate": "9c314d166fe554d0e6e481791f9f81c9bb71b6f8",
+    "old": "9c314d166fe554d0e6e481791f9f81c9bb71b6f8",
+    "candidate": "d5fb80f638fa381ccb109fd19d1ec01499d70269",
     "upstream_files": [
       "net/mwan3/Makefile",
       "net/mwan3/files/lib/mwan3/common.sh",
       "net/mwan3/test.sh"
     ],
-    "bundle_sha256": "5f7a1be74d9b161ff7cc23c8f796c030887c7764cfcb861652fe6293e4f223ae"
+    "validated_branch": "validated/maintainer-mwan3-pd-20261021",
+    "archive_branch": "archive/before-maintainer-mwan3-pd-20261021",
+    "bundle_sha256": "6ddcd3972e802e72a275827a8292bf0a71813ac6d08e3ed8b42fdcbf84da88a9"
   }
 ]

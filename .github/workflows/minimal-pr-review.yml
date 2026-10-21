@@ -1,4 +1,4 @@
-name: Verify minimal PR revisions
+name: Verify mwan3 maintainer revisions
 on:
   push:
     branches: [bootstrap/pr-maintenance-minimal-20261019]
@@ -36,7 +36,7 @@ jobs:
           python3 ci/verify-revisions.py --manifest ci/manifest.json --source source --output evidence --ash "$GITHUB_WORKSPACE/bin/ash"
       - uses: actions/upload-artifact@v4
         with:
-          name: minimal-pr-revisions-packages
+          name: mwan3-maintainer-revisions-20261021
           path: evidence/
           if-no-files-found: error
       - name: Publish only validated candidate branches
@@ -46,5 +46,5 @@ jobs:
           from pathlib import Path
           source=Path('source').resolve()
           for c in json.loads(Path('ci/manifest.json').read_text()):
-              subprocess.run(['git','-C',str(source),'push','origin',c['candidate']+':refs/heads/validated/minimal-'+c['slug']+'-20261019'],check=True)
+              subprocess.run(['git','-C',str(source),'push','origin',c['candidate']+':refs/heads/'+c['validated_branch']],check=True)
           PYCODE
