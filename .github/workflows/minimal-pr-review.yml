@@ -1,4 +1,4 @@
-name: Verify mwan3 maintainer revisions
+name: Verify mwan3 after merged rpcd fix
 on:
   push:
     branches: [bootstrap/pr-maintenance-minimal-20261019]
@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          ref: 681b4179a3ca463c879153cad403a25707b9983e
+          ref: 2a5d2301904f84ff61615dd4e4d1db6d4f1fbf67
           fetch-depth: 1
           path: source
       - name: Build pinned ucode for package tests
@@ -36,7 +36,7 @@ jobs:
           python3 ci/verify-revisions.py --manifest ci/manifest.json --source source --output evidence --ash "$GITHUB_WORKSPACE/bin/ash"
       - uses: actions/upload-artifact@v4
         with:
-          name: mwan3-maintainer-revisions-20261021-v2
+          name: mwan3-post-merge-revisions-20261021
           path: evidence/
           if-no-files-found: error
       - name: Publish only validated candidate branches

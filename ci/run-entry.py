@@ -34,9 +34,9 @@ with tempfile.TemporaryDirectory(prefix='mwan-entry-') as directory:
     fixture = Path(directory)
     if external.exists():
         program = external.read_text()
-        if a.plugin:
-            assert program.count("'/usr/share/rpcd/ucode/mwan3'") == 1
-            program = program.replace("'/usr/share/rpcd/ucode/mwan3'", repr(str(a.plugin.resolve())))
+        plugin = a.plugin or root / 'net/mwan3/files/usr/share/rpcd/ucode/mwan3'
+        assert program.count("'/usr/share/rpcd/ucode/mwan3'") == 1
+        program = program.replace("'/usr/share/rpcd/ucode/mwan3'", repr(str(plugin.resolve())))
         (fixture / external.name).write_text(program)
     entry = fixture / 'test.sh'
     entry.write_text(setup + body)

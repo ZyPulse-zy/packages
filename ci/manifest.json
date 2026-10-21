@@ -1,63 +1,40 @@
 [
   {
     "repo": "openwrt/packages",
-    "n": 30800,
-    "slug": "mwan3-rpcd",
-    "base": "681b4179a3ca463c879153cad403a25707b9983e",
-    "branch": "fix/mwan3-finite-status",
-    "fork": "ZyPulse-zy/packages",
-    "old": "e68a72463fe636709fc4d580aa7cceb4ebbf61fe",
-    "candidate": "d952d1db1866aac8b2cec32f9c771c362f7e73c6",
-    "upstream_files": [
-      "net/mwan3/Makefile",
-      "net/mwan3/files/usr/share/rpcd/ucode/mwan3",
-      "net/mwan3/test-rpcd.uc",
-      "net/mwan3/test.sh"
-    ],
-    "validated_branch": "validated/maintainer-mwan3-rpcd-20261021-v2",
-    "archive_branch": "archive/before-maintainer-mwan3-rpcd-20261021",
-    "bundle_sha256": "6a56da3997d6a21e7bb50d14b8ac21d55898e2f4075995c57b469afe4470026c",
-    "previous_candidate": "ac6f7aa311b0ecdb0d62c9e70f019f5b19598ef4",
-    "source_update_expected_sha": "ac6f7aa311b0ecdb0d62c9e70f019f5b19598ef4"
-  },
-  {
-    "repo": "openwrt/packages",
     "n": 30803,
     "slug": "mwan3-nexthop",
-    "base": "3d6229131a40fc3417ad2d8bd9d4050458c4fd95",
-    "branch": "fix/mwan3-expanded-nexthop",
     "fork": "ZyPulse-zy/packages",
-    "old": "6d0ff59f8cb82fbea93b86c3c0101e22cc516e10",
-    "candidate": "1a56a77b3c1a1e89e3fb9950992e20886f760c1b",
+    "branch": "fix/mwan3-expanded-nexthop",
     "upstream_files": [
       "net/mwan3/Makefile",
       "net/mwan3/files/lib/mwan3/common.sh",
       "net/mwan3/test.sh"
     ],
-    "validated_branch": "validated/maintainer-mwan3-nexthop-20261021-v2",
-    "archive_branch": "archive/before-maintainer-mwan3-nexthop-20261021",
-    "bundle_sha256": "219b1d63caa95f4f6f48b6b9de430a5942f79350b67ccd0ccab7f53b64d844c2",
-    "previous_candidate": "9d12761ec6eda93caafa2004e4ccd0eafd734e61",
-    "source_update_expected_sha": "9d12761ec6eda93caafa2004e4ccd0eafd734e61"
+    "old": "1a56a77b3c1a1e89e3fb9950992e20886f760c1b",
+    "old_base": "3d6229131a40fc3417ad2d8bd9d4050458c4fd95",
+    "candidate": "eb961e3704d554631d810eb162fb5dff96abfea1",
+    "base": "2a5d2301904f84ff61615dd4e4d1db6d4f1fbf67",
+    "validated_branch": "validated/post-merge-mwan3-nexthop-20261021",
+    "archive_branch": "archive/before-post-merge-mwan3-nexthop-20261021",
+    "bundle_sha256": "683d4814dbeb3601f74b5a58ec071c0fd8fa59fba0cc0870cf6e6cdfef5a3668"
   },
   {
     "repo": "openwrt/packages",
     "n": 30806,
     "slug": "mwan3-pd",
-    "base": "3d6229131a40fc3417ad2d8bd9d4050458c4fd95",
-    "branch": "fix/mwan3-ipv6-pd-source",
     "fork": "ZyPulse-zy/packages",
-    "old": "9c314d166fe554d0e6e481791f9f81c9bb71b6f8",
-    "candidate": "85acdf31c57f98d8b91fc885f7c92fe5466fb69a",
+    "branch": "fix/mwan3-ipv6-pd-source",
     "upstream_files": [
       "net/mwan3/Makefile",
       "net/mwan3/files/lib/mwan3/common.sh",
       "net/mwan3/test.sh"
     ],
-    "validated_branch": "validated/maintainer-mwan3-pd-20261021-v2",
-    "archive_branch": "archive/before-maintainer-mwan3-pd-20261021",
-    "bundle_sha256": "6168efb5c95ad265246b34fd00c538095db3122dcc5a3b24a0b90958e0e4f191",
-    "previous_candidate": "d5fb80f638fa381ccb109fd19d1ec01499d70269",
-    "source_update_expected_sha": "d5fb80f638fa381ccb109fd19d1ec01499d70269"
+    "old": "85acdf31c57f98d8b91fc885f7c92fe5466fb69a",
+    "old_base": "3d6229131a40fc3417ad2d8bd9d4050458c4fd95",
+    "candidate": "80061bbd8a9612f3d98858c80624d476895b2641",
+    "base": "2a5d2301904f84ff61615dd4e4d1db6d4f1fbf67",
+    "validated_branch": "validated/post-merge-mwan3-pd-20261021",
+    "archive_branch": "archive/before-post-merge-mwan3-pd-20261021",
+    "bundle_sha256": "df233577fd07248c0ad78cdf4f4532e6227554e2e46b3a23a3c34550888bbb34"
   }
 ]
