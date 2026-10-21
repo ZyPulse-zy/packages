@@ -29,7 +29,7 @@ jobs:
           printf '#!/bin/sh\nexec "%s" -L "%s/*.so" "$@"\n' "$GITHUB_WORKSPACE/ucode-build/ucode" "$GITHUB_WORKSPACE/ucode-build" > bin/ucode
           chmod +x bin/ucode
           echo "$GITHUB_WORKSPACE/bin" >> "$GITHUB_PATH"
-      - name: Verify rebased fixes and merged rpcd checks
+      - name: Verify rebased fixes, merged rpcd checks and original failures
         run: |
           mkdir -p bin
           ln -s "$(command -v busybox)" bin/ash
