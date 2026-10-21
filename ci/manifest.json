@@ -7,16 +7,18 @@
     "branch": "fix/mwan3-finite-status",
     "fork": "ZyPulse-zy/packages",
     "old": "e68a72463fe636709fc4d580aa7cceb4ebbf61fe",
-    "candidate": "ac6f7aa311b0ecdb0d62c9e70f019f5b19598ef4",
+    "candidate": "d952d1db1866aac8b2cec32f9c771c362f7e73c6",
     "upstream_files": [
       "net/mwan3/Makefile",
       "net/mwan3/files/usr/share/rpcd/ucode/mwan3",
       "net/mwan3/test-rpcd.uc",
       "net/mwan3/test.sh"
     ],
-    "validated_branch": "validated/maintainer-mwan3-rpcd-20261021",
+    "validated_branch": "validated/maintainer-mwan3-rpcd-20261021-v2",
     "archive_branch": "archive/before-maintainer-mwan3-rpcd-20261021",
-    "bundle_sha256": "1d8faed03662e0343fd6177894e1da536699ce80d8855809c5501097194c5d23"
+    "bundle_sha256": "6a56da3997d6a21e7bb50d14b8ac21d55898e2f4075995c57b469afe4470026c",
+    "previous_candidate": "ac6f7aa311b0ecdb0d62c9e70f019f5b19598ef4",
+    "source_update_expected_sha": "ac6f7aa311b0ecdb0d62c9e70f019f5b19598ef4"
   },
   {
     "repo": "openwrt/packages",
@@ -26,15 +28,17 @@
     "branch": "fix/mwan3-expanded-nexthop",
     "fork": "ZyPulse-zy/packages",
     "old": "6d0ff59f8cb82fbea93b86c3c0101e22cc516e10",
-    "candidate": "9d12761ec6eda93caafa2004e4ccd0eafd734e61",
+    "candidate": "1a56a77b3c1a1e89e3fb9950992e20886f760c1b",
     "upstream_files": [
       "net/mwan3/Makefile",
       "net/mwan3/files/lib/mwan3/common.sh",
       "net/mwan3/test.sh"
     ],
-    "validated_branch": "validated/maintainer-mwan3-nexthop-20261021",
+    "validated_branch": "validated/maintainer-mwan3-nexthop-20261021-v2",
     "archive_branch": "archive/before-maintainer-mwan3-nexthop-20261021",
-    "bundle_sha256": "001e746b153e326eb826721ef885c0a178faeef0d3761d31f2308b9a3a6e8901"
+    "bundle_sha256": "219b1d63caa95f4f6f48b6b9de430a5942f79350b67ccd0ccab7f53b64d844c2",
+    "previous_candidate": "9d12761ec6eda93caafa2004e4ccd0eafd734e61",
+    "source_update_expected_sha": "9d12761ec6eda93caafa2004e4ccd0eafd734e61"
   },
   {
     "repo": "openwrt/packages",
@@ -44,14 +48,16 @@
     "branch": "fix/mwan3-ipv6-pd-source",
     "fork": "ZyPulse-zy/packages",
     "old": "9c314d166fe554d0e6e481791f9f81c9bb71b6f8",
-    "candidate": "d5fb80f638fa381ccb109fd19d1ec01499d70269",
+    "candidate": "85acdf31c57f98d8b91fc885f7c92fe5466fb69a",
     "upstream_files": [
       "net/mwan3/Makefile",
       "net/mwan3/files/lib/mwan3/common.sh",
       "net/mwan3/test.sh"
     ],
-    "validated_branch": "validated/maintainer-mwan3-pd-20261021",
+    "validated_branch": "validated/maintainer-mwan3-pd-20261021-v2",
     "archive_branch": "archive/before-maintainer-mwan3-pd-20261021",
-    "bundle_sha256": "6ddcd3972e802e72a275827a8292bf0a71813ac6d08e3ed8b42fdcbf84da88a9"
+    "bundle_sha256": "6168efb5c95ad265246b34fd00c538095db3122dcc5a3b24a0b90958e0e4f191",
+    "previous_candidate": "d5fb80f638fa381ccb109fd19d1ec01499d70269",
+    "source_update_expected_sha": "d5fb80f638fa381ccb109fd19d1ec01499d70269"
   }
 ]

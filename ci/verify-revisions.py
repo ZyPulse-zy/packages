@@ -54,6 +54,7 @@ for c in manifest:
     assert git(root, 'rev-parse', 'HEAD^').decode().strip() == c['base']
     assert git(root, 'show', '-s', '--format=%an <%ae>').decode().strip() == 'Yuen Su <zypulsecore@gmail.com>'
     assert 'Signed-off-by: Yuen Su <zypulsecore@gmail.com>' in git(root, 'show', '-s', '--format=%B').decode()
+    assert '2.12.3' in git(root, 'show', '-s', '--format=%s').decode()
     git(root, 'diff', '--check', c['base'], c['candidate'])
     names = git(root, 'diff', '--name-only', c['base'], c['candidate']).decode().splitlines()
     assert names == c['upstream_files']
