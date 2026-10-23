@@ -8,6 +8,7 @@ import tempfile
 p = argparse.ArgumentParser()
 p.add_argument('--source', type=Path, required=True)
 p.add_argument('--shell', required=True)
+p.add_argument('--trace', action='store_true')
 p.add_argument('--plugin', type=Path)
 p.add_argument('--common', type=Path)
 p.add_argument('--expected-failure', default='')
@@ -40,7 +41,7 @@ with tempfile.TemporaryDirectory(prefix='mwan-entry-') as directory:
         (fixture / external.name).write_text(program)
     entry = fixture / 'test.sh'
     entry.write_text(setup + body)
-    result = subprocess.run([a.shell, str(entry),
+    result = subprocess.run([a.shell, *(['-x'] if a.trace else []), str(entry),
         str((a.common or root / 'net/mwan3/files/lib/mwan3/common.sh').resolve()), directory],
         cwd='/', capture_output=True, text=True, timeout=30)
     print(result.stdout + result.stderr, end='')
